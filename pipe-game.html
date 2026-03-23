@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>水管连接游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .info-panel {
+            display: flex;
+            gap: 30px;
+            font-size: 18px;
+        }
+
+        .info-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        #gameCanvas {
+            border: 3px solid #4a90d9;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(74, 144, 217, 0.5);
+            cursor: pointer;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .victory-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .victory-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 60px;
+            border-radius: 20px;
+            text-align: center;
+            animation: popIn 0.5s ease;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .victory-content h2 {
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+
+        .victory-content p {
+            font-size: 20px;
+            margin-bottom: 30px;
+        }
+
+        .game-instructions {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px 25px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            font-size: 14px;
+            line-height: 1.8;
+            max-width: 640px;
+        }
+
+        .instruction-item {
+            display: inline-flex;
+            align-items: center;
+            margin: 0 15px;
+            gap: 8px;
+        }
+
+        .color-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .hint-highlight {
+            animation: hintPulse 1s ease-in-out 3;
+        }
+
+        @keyframes hintPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7); }
+            50% { box-shadow: 0 0 20px 10px rgba(255, 215, 0, 0.3); }
+        }
+
+        .hint-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+
+        .hint-content {
+            background: linear-gradient(135deg, #f5af19 0%, #f12711 100%);
+            padding: 30px 50px;
+            border-radius: 15px;
+            text-align: center;
+            animation: popIn 0.3s ease;
+        }
+
+        .hint-content h3 {
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+
+        .hint-content p {
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>水管连接游戏</h1>
+    <div class="game-container">
+        <div class="info-panel">
+            <div class="info-item">步数: <span id="moveCount">0</span></div>
+            <div class="info-item">时间: <span id="timeCount">00:00</span></div>
+        </div>
+        <canvas id="gameCanvas" width="640" height="640"></canvas>
+        <div class="controls">
+            <button class="btn-primary" onclick="game.newGame()">新游戏</button>
+            <button class="btn-secondary" onclick="game.showHint()">提示</button>
+        </div>
+
+        <div class="game-instructions">
+            <div class="instruction-item">
+                <span class="color-dot" style="background: #ff6b6b;"></span>
+                <span>S为起点</span>
+            </div>
+            <div class="instruction-item">
+                <span class="color-dot" style="background: #ffd93d;"></span>
+                <span>E为终点</span>
+            </div>
+            <div class="instruction-item">
+                <span class="color-dot" style="background: #00ff88;"></span>
+                <span>绿色为已连通</span>
+            </div>
+            <div class="instruction-item">
+                <span class="color-dot" style="background: #4a90d9;"></span>
+                <span>蓝色为待连通</span>
+            </div>
+            <div style="margin-top: 10px; color: rgba(255,255,255,0.7);">
+                点击水管可旋转，将S和E连通即可通关
+            </div>
+        </div>
+    </div>
+
+    <div class="hint-modal" id="hintModal">
+        <div class="hint-content">
+            <h3>提示</h3>
+            <p id="hintText">正在寻找下一个需要调整的水管...</p>
+            <button class="btn-primary" onclick="game.closeHint()">知道了</button>
+        </div>
+    </div>
+
+    <div class="victory-modal" id="victoryModal">
+        <div class="victory-content">
+            <h2>恭喜通关!</h2>
+            <p>步数: <span id="finalMoves">0</span> | 时间: <span id="finalTime">00:00</span></p>
+            <button class="btn-primary" onclick="game.closeVictory()">再玩一局</button>
+        </div>
+    </div>
+
+    <script>
+        // 游戏配置
+        const CONFIG = {
+            GRID_SIZE: 8,
+            CELL_SIZE: 80,
+            PIPE_WIDTH: 20,
+            COLORS: {
+                PIPE: '#4a90d9',
+                PIPE_ACTIVE: '#00ff88',
+                PIPE_EMPTY: '#2a3f5f',
+                START: '#ff6b6b',
+                END: '#ffd93d',
+                BG: '#1a1a2e'
+            }
+        };
+
+        // 方向定义: 0=上, 1=右, 2=下, 3=左
+        const DIRECTIONS = {
+            UP: 0,
+            RIGHT: 1,
+            DOWN: 2,
+            LEFT: 3
+        };
+
+        // 方向偏移量 [上, 右, 下, 左]
+        const DIRECTION_OFFSETS = [
+            { dx: 0, dy: -1 },  // 上
+            { dx: 1, dy: 0 },   // 右
+            { dx: 0, dy: 1 },   // 下
+            { dx: -1, dy: 0 }   // 左
+        ];
+
+        // 水管类型定义
+        // 每个类型包含连接的方向数组
+        const PIPE_TYPES = {
+            EMPTY: { id: 0, connections: [], name: '空' },
+            VERTICAL: { id: 1, connections: [0, 2], name: '上下' },      // 上下通
+            HORIZONTAL: { id: 2, connections: [1, 3], name: '左右' },    // 左右通
+            UP_RIGHT: { id: 3, connections: [0, 1], name: '上右' },      // 上右通
+            RIGHT_DOWN: { id: 4, connections: [1, 2], name: '右下' },    // 右下通
+            DOWN_LEFT: { id: 5, connections: [2, 3], name: '下左' },     // 下左通
+            LEFT_UP: { id: 6, connections: [3, 0], name: '左上' }        // 左上通
+        };
+
+        // 水管类
+        class Pipe {
+            constructor(type, row, col) {
+                this.type = type;
+                this.row = row;
+                this.col = col;
+                this.rotation = 0; // 0, 1, 2, 3 对应 0, 90, 180, 270 度
+                this.isConnected = false;
+                this.isPath = false; // 是否是主路径
+            }
+
+            // 获取当前旋转后的连接方向
+            getConnections() {
+                return this.type.connections.map(dir => (dir + this.rotation) % 4);
+            }
+
+            // 检查是否连接到某个方向
+            hasConnection(direction) {
+                return this.getConnections().includes(direction);
+            }
+
+            // 旋转水管
+            rotate() {
+                this.rotation = (this.rotation + 1) % 4;
+            }
+
+            // 设置随机旋转
+            randomRotate() {
+                this.rotation = Math.floor(Math.random() * 4);
+            }
+        }
+
+        // 游戏类
+        class PipeGame {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.grid = [];
+                this.startPos = null;
+                this.endPos = null;
+                this.moveCount = 0;
+                this.startTime = null;
+                this.timerInterval = null;
+                this.isVictory = false;
+                this.pathCells = []; // 存储主路径的格子
+                this.hintTarget = null; // 提示目标位置
+
+                this.init();
+            }
+
+            init() {
+                this.canvas.addEventListener('click', (e) => this.handleClick(e));
+                this.newGame();
+            }
+
+            // 生成新游戏
+            newGame() {
+                this.moveCount = 0;
+                this.isVictory = false;
+                this.pathCells = [];
+                this.updateUI();
+                this.resetTimer();
+                this.startTimer();
+                this.generateLevel();
+                this.draw();
+            }
+
+            // 使用路径扩展法生成关卡
+            generateLevel() {
+                // 初始化空网格
+                this.grid = [];
+                for (let row = 0; row < CONFIG.GRID_SIZE; row++) {
+                    this.grid[row] = [];
+                    for (let col = 0; col < CONFIG.GRID_SIZE; col++) {
+                        this.grid[row][col] = new Pipe(PIPE_TYPES.EMPTY, row, col);
+                    }
+                }
+
+                // 随机选择起点和终点（不同边缘）
+                const edges = ['top', 'right', 'bottom', 'left'];
+                const startEdge = edges[Math.floor(Math.random() * edges.length)];
+                let endEdge;
+                do {
+                    endEdge = edges[Math.floor(Math.random() * edges.length)];
+                } while (endEdge === startEdge);
+
+                // 在边缘上选择起点和终点位置
+                this.startPos = this.getRandomEdgePosition(startEdge);
+                this.endPos = this.getRandomEdgePosition(endEdge);
+
+                // 使用DFS生成路径
+                this.generatePath();
+
+                // 填充剩余格子
+                this.fillEmptyCells();
+
+                // 随机旋转路径上的水管
+                this.scramblePathPipes();
+            }
+
+            // 获取边缘随机位置
+            getRandomEdgePosition(edge) {
+                const size = CONFIG.GRID_SIZE;
+                switch (edge) {
+                    case 'top': return { row: 0, col: Math.floor(Math.random() * size) };
+                    case 'right': return { row: Math.floor(Math.random() * size), col: size - 1 };
+                    case 'bottom': return { row: size - 1, col: Math.floor(Math.random() * size) };
+                    case 'left': return { row: Math.floor(Math.random() * size), col: 0 };
+                }
+            }
+
+            // 生成路径（DFS）
+            generatePath() {
+                const visited = new Set();
+                const path = [];
+
+                const dfs = (row, col) => {
+                    // 到达终点
+                    if (row === this.endPos.row && col === this.endPos.col) {
+                        path.push({ row, col });
+                        return true;
+                    }
+
+                    visited.add(`${row},${col}`);
+                    path.push({ row, col });
+
+                    // 获取所有可能的下一个位置
+                    const neighbors = this.getValidNeighbors(row, col, visited);
+
+                    // 随机打乱邻居顺序
+                    for (let i = neighbors.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [neighbors[i], neighbors[j]] = [neighbors[j], neighbors[i]];
+                    }
+
+                    for (const neighbor of neighbors) {
+                        if (dfs(neighbor.row, neighbor.col)) {
+                            return true;
+                        }
+                    }
+
+                    path.pop();
+                    return false;
+                };
+
+                dfs(this.startPos.row, this.startPos.col);
+
+                // 根据路径设置水管类型
+                this.pathCells = path;
+                for (let i = 0; i < path.length; i++) {
+                    const current = path[i];
+                    const prev = i > 0 ? path[i - 1] : null;
+                    const next = i < path.length - 1 ? path[i + 1] : null;
+
+                    const pipe = this.grid[current.row][current.col];
+                    pipe.isPath = true;
+
+                    // 确定连接方向
+                    const connections = [];
+                    if (prev) {
+                        connections.push(this.getDirection(current, prev));
+                    }
+                    if (next) {
+                        connections.push(this.getDirection(current, next));
+                    }
+
+                    // 根据连接方向确定水管类型
+                    pipe.type = this.getPipeTypeByConnections(connections);
+                    pipe.rotation = 0; // 初始无旋转
+                }
+            }
+
+            // 获取有效的邻居位置
+            getValidNeighbors(row, col, visited) {
+                const neighbors = [];
+                const directions = [
+                    { dr: -1, dc: 0 }, // 上
+                    { dr: 1, dc: 0 },  // 下
+                    { dr: 0, dc: -1 }, // 左
+                    { dr: 0, dc: 1 }   // 右
+                ];
+
+                for (const dir of directions) {
+                    const newRow = row + dir.dr;
+                    const newCol = col + dir.dc;
+
+                    if (newRow >= 0 && newRow < CONFIG.GRID_SIZE &&
+                        newCol >= 0 && newCol < CONFIG.GRID_SIZE &&
+                        !visited.has(`${newRow},${newCol}`)) {
+                        neighbors.push({ row: newRow, col: newCol });
+                    }
+                }
+
+                return neighbors;
+            }
+
+            // 获取从一个位置到另一个位置的方向
+            getDirection(from, to) {
+                if (to.row < from.row) return DIRECTIONS.UP;
+                if (to.row > from.row) return DIRECTIONS.DOWN;
+                if (to.col < from.col) return DIRECTIONS.LEFT;
+                if (to.col > from.col) return DIRECTIONS.RIGHT;
+            }
+
+            // 根据连接方向获取水管类型
+            getPipeTypeByConnections(connections) {
+                if (connections.length === 1) {
+                    // 起点或终点，只有一个连接
+                    // 默认使用直通管，让另一个方向与边缘对齐
+                    const dir = connections[0];
+                    // 如果连接方向是上下，使用上下通；如果是左右，使用左右通
+                    if (dir === DIRECTIONS.UP || dir === DIRECTIONS.DOWN) {
+                        return PIPE_TYPES.VERTICAL;
+                    } else {
+                        return PIPE_TYPES.HORIZONTAL;
+                    }
+                }
+
+                const sorted = connections.sort((a, b) => a - b);
+                const key = sorted.join(',');
+
+                switch (key) {
+                    case '0,2': return PIPE_TYPES.VERTICAL;
+                    case '1,3': return PIPE_TYPES.HORIZONTAL;
+                    case '0,1': return PIPE_TYPES.UP_RIGHT;
+                    case '1,2': return PIPE_TYPES.RIGHT_DOWN;
+                    case '2,3': return PIPE_TYPES.DOWN_LEFT;
+                    case '0,3': return PIPE_TYPES.LEFT_UP;
+                    default: return PIPE_TYPES.VERTICAL;
+                }
+            }
+
+            // 填充空格子
+            fillEmptyCells() {
+                const nonEmptyTypes = [
+                    PIPE_TYPES.VERTICAL,
+                    PIPE_TYPES.HORIZONTAL,
+                    PIPE_TYPES.UP_RIGHT,
+                    PIPE_TYPES.RIGHT_DOWN,
+                    PIPE_TYPES.DOWN_LEFT,
+                    PIPE_TYPES.LEFT_UP
+                ];
+
+                for (let row = 0; row < CONFIG.GRID_SIZE; row++) {
+                    for (let col = 0; col < CONFIG.GRID_SIZE; col++) {
+                        const pipe = this.grid[row][col];
+                        if (pipe.type === PIPE_TYPES.EMPTY) {
+                            // 随机选择一个非空水管类型
+                            pipe.type = nonEmptyTypes[Math.floor(Math.random() * nonEmptyTypes.length)];
+                            pipe.randomRotate();
+                        }
+                    }
+                }
+            }
+
+            // 打乱路径上的水管
+            scramblePathPipes() {
+                for (const pos of this.pathCells) {
+                    const pipe = this.grid[pos.row][pos.col];
+                    // 随机旋转 1-3 次（确保不保持原样）
+                    const rotations = Math.floor(Math.random() * 3) + 1;
+                    for (let i = 0; i < rotations; i++) {
+                        pipe.rotate();
+                    }
+                }
+            }
+
+            // 处理点击事件
+            handleClick(e) {
+                if (this.isVictory) return;
+
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                const col = Math.floor(x / CONFIG.CELL_SIZE);
+                const row = Math.floor(y / CONFIG.CELL_SIZE);
+
+                if (row >= 0 && row < CONFIG.GRID_SIZE && col >= 0 && col < CONFIG.GRID_SIZE) {
+                    this.grid[row][col].rotate();
+                    this.moveCount++;
+                    this.updateUI();
+                    this.draw();
+                    this.checkVictory();
+                }
+            }
+
+            // 检查是否通关
+            checkVictory() {
+                // 从起点开始BFS检查连通性
+                const connected = this.checkConnectivity();
+
+                // 高亮连通的水管
+                this.updateConnectedState(connected);
+                this.draw();
+
+                // 检查起点到终点是否连通
+                if (connected[this.endPos.row][this.endPos.col]) {
+                    this.isVictory = true;
+                    this.stopTimer();
+                    setTimeout(() => this.showVictory(), 300);
+                }
+            }
+
+            // 检查连通性（BFS）
+            checkConnectivity() {
+                const connected = Array(CONFIG.GRID_SIZE).fill(null)
+                    .map(() => Array(CONFIG.GRID_SIZE).fill(false));
+
+                const queue = [{ row: this.startPos.row, col: this.startPos.col }];
+                connected[this.startPos.row][this.startPos.col] = true;
+
+                while (queue.length > 0) {
+                    const { row, col } = queue.shift();
+                    const pipe = this.grid[row][col];
+                    const connections = pipe.getConnections();
+
+                    for (const dir of connections) {
+                        const offset = DIRECTION_OFFSETS[dir];
+                        const newRow = row + offset.dy;
+                        const newCol = col + offset.dx;
+
+                        if (newRow >= 0 && newRow < CONFIG.GRID_SIZE &&
+                            newCol >= 0 && newCol < CONFIG.GRID_SIZE &&
+                            !connected[newRow][newCol]) {
+                            const neighbor = this.grid[newRow][newCol];
+                            const oppositeDir = (dir + 2) % 4;
+
+                            if (neighbor.hasConnection(oppositeDir)) {
+                                connected[newRow][newCol] = true;
+                                queue.push({ row: newRow, col: newCol });
+                            }
+                        }
+                    }
+                }
+
+                return connected;
+            }
+
+            // 更新连通状态
+            updateConnectedState(connected) {
+                for (let row = 0; row < CONFIG.GRID_SIZE; row++) {
+                    for (let col = 0; col < CONFIG.GRID_SIZE; col++) {
+                        this.grid[row][col].isConnected = connected[row][col];
+                    }
+                }
+            }
+
+            // 绘制游戏
+            draw() {
+                // 清空画布
+                this.ctx.fillStyle = CONFIG.COLORS.BG;
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // 绘制网格
+                this.drawGrid();
+
+                // 绘制水管
+                for (let row = 0; row < CONFIG.GRID_SIZE; row++) {
+                    for (let col = 0; col < CONFIG.GRID_SIZE; col++) {
+                        this.drawPipe(this.grid[row][col], col * CONFIG.CELL_SIZE, row * CONFIG.CELL_SIZE);
+                    }
+                }
+
+                // 绘制起点和终点标记
+                this.drawMarkers();
+            }
+
+            // 绘制网格
+            drawGrid() {
+                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                this.ctx.lineWidth = 1;
+
+                for (let i = 0; i <= CONFIG.GRID_SIZE; i++) {
+                    const pos = i * CONFIG.CELL_SIZE;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(pos, 0);
+                    this.ctx.lineTo(pos, this.canvas.height);
+                    this.ctx.stroke();
+
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, pos);
+                    this.ctx.lineTo(this.canvas.width, pos);
+                    this.ctx.stroke();
+                }
+            }
+
+            // 绘制水管
+            drawPipe(pipe, x, y) {
+                const centerX = x + CONFIG.CELL_SIZE / 2;
+                const centerY = y + CONFIG.CELL_SIZE / 2;
+                const halfSize = CONFIG.CELL_SIZE / 2;
+
+                // 绘制背景
+                this.ctx.fillStyle = pipe.isConnected ? 'rgba(0, 255, 136, 0.1)' : 'rgba(42, 63, 95, 0.5)';
+                this.ctx.fillRect(x, y, CONFIG.CELL_SIZE, CONFIG.CELL_SIZE);
+
+                if (pipe.type === PIPE_TYPES.EMPTY) return;
+
+                // 设置水管颜色
+                this.ctx.strokeStyle = pipe.isConnected ? CONFIG.COLORS.PIPE_ACTIVE : CONFIG.COLORS.PIPE;
+                this.ctx.lineWidth = CONFIG.PIPE_WIDTH;
+                this.ctx.lineCap = 'round';
+
+                // 保存上下文用于旋转
+                this.ctx.save();
+                this.ctx.translate(centerX, centerY);
+                this.ctx.rotate(pipe.rotation * Math.PI / 2);
+
+                // 根据水管类型绘制
+                this.ctx.beginPath();
+                switch (pipe.type) {
+                    case PIPE_TYPES.VERTICAL:
+                        this.ctx.moveTo(0, -halfSize + 5);
+                        this.ctx.lineTo(0, halfSize - 5);
+                        break;
+                    case PIPE_TYPES.HORIZONTAL:
+                        this.ctx.moveTo(-halfSize + 5, 0);
+                        this.ctx.lineTo(halfSize - 5, 0);
+                        break;
+                    case PIPE_TYPES.UP_RIGHT:
+                        this.ctx.moveTo(0, -halfSize + 5);
+                        this.ctx.lineTo(0, 0);
+                        this.ctx.lineTo(halfSize - 5, 0);
+                        break;
+                    case PIPE_TYPES.RIGHT_DOWN:
+                        this.ctx.moveTo(halfSize - 5, 0);
+                        this.ctx.lineTo(0, 0);
+                        this.ctx.lineTo(0, halfSize - 5);
+                        break;
+                    case PIPE_TYPES.DOWN_LEFT:
+                        this.ctx.moveTo(0, halfSize - 5);
+                        this.ctx.lineTo(0, 0);
+                        this.ctx.lineTo(-halfSize + 5, 0);
+                        break;
+                    case PIPE_TYPES.LEFT_UP:
+                        this.ctx.moveTo(-halfSize + 5, 0);
+                        this.ctx.lineTo(0, 0);
+                        this.ctx.lineTo(0, -halfSize + 5);
+                        break;
+                }
+                this.ctx.stroke();
+
+                // 绘制连接点
+                this.ctx.fillStyle = pipe.isConnected ? CONFIG.COLORS.PIPE_ACTIVE : CONFIG.COLORS.PIPE;
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, CONFIG.PIPE_WIDTH / 3, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                this.ctx.restore();
+            }
+
+            // 绘制起点和终点标记
+            drawMarkers() {
+                const markerSize = 20;
+
+                // 起点
+                const startX = this.startPos.col * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
+                const startY = this.startPos.row * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
+                this.ctx.fillStyle = CONFIG.COLORS.START;
+                this.ctx.beginPath();
+                this.ctx.arc(startX, startY, markerSize / 2, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.fillStyle = '#fff';
+                this.ctx.font = 'bold 12px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.fillText('S', startX, startY);
+
+                // 终点
+                const endX = this.endPos.col * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
+                const endY = this.endPos.row * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
+                this.ctx.fillStyle = CONFIG.COLORS.END;
+                this.ctx.beginPath();
+                this.ctx.arc(endX, endY, markerSize / 2, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.fillStyle = '#333';
+                this.ctx.fillText('E', endX, endY);
+            }
+
+            // 显示提示
+            showHint() {
+                if (this.isVictory) return;
+
+                // 找到当前连通区域
+                const connected = this.checkConnectivity();
+                
+                // 找到连通区域的边界（可以扩展的下一个水管）
+                let hintPipe = null;
+                let hintMessage = "";
+
+                // 遍历所有连通的水管，找到下一个可以连接的水管
+                for (let row = 0; row < CONFIG.GRID_SIZE; row++) {
+                    for (let col = 0; col < CONFIG.GRID_SIZE; col++) {
+                        if (connected[row][col]) {
+                            const pipe = this.grid[row][col];
+                            const connections = pipe.getConnections();
+
+                            for (const dir of connections) {
+                                const offset = DIRECTION_OFFSETS[dir];
+                                const newRow = row + offset.dy;
+                                const newCol = col + offset.dx;
+
+                                if (newRow >= 0 && newRow < CONFIG.GRID_SIZE &&
+                                    newCol >= 0 && newCol < CONFIG.GRID_SIZE &&
+                                    !connected[newRow][newCol]) {
+                                    const neighbor = this.grid[newRow][newCol];
+                                    const oppositeDir = (dir + 2) % 4;
+
+                                    // 检查这个邻居是否是主路径的一部分
+                                    if (neighbor.isPath) {
+                                        // 计算需要旋转多少次才能连通
+                                        const rotationsNeeded = this.calculateRotationsNeeded(neighbor, oppositeDir);
+                                        if (rotationsNeeded !== -1) {
+                                            hintPipe = neighbor;
+                                            hintMessage = `第 ${newRow + 1} 行，第 ${newCol + 1} 列的水管需要旋转 ${rotationsNeeded} 次`;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            if (hintPipe) break;
+                        }
+                    }
+                    if (hintPipe) break;
+                }
+
+                // 如果没有找到，检查起点本身是否需要调整
+                if (!hintPipe) {
+                    const startPipe = this.grid[this.startPos.row][this.startPos.col];
+                    if (!this.isPipeCorrectlyRotated(startPipe)) {
+                        hintPipe = startPipe;
+                        hintMessage = `起点水管（第 ${this.startPos.row + 1} 行，第 ${this.startPos.col + 1} 列）需要调整`;
+                    }
+                }
+
+                // 显示提示
+                if (hintPipe) {
+                    this.hintTarget = { row: hintPipe.row, col: hintPipe.col };
+                    document.getElementById('hintText').textContent = hintMessage;
+                    document.getElementById('hintModal').style.display = 'flex';
+                    
+                    // 在画布上高亮提示的水管
+                    this.draw();
+                    this.drawHintHighlight(hintPipe.row, hintPipe.col);
+                } else {
+                    document.getElementById('hintText').textContent = '当前路径已正确，继续加油！';
+                    document.getElementById('hintModal').style.display = 'flex';
+                }
+            }
+
+            // 计算水管需要旋转多少次才能连通指定方向
+            calculateRotationsNeeded(pipe, targetDir) {
+                const originalConnections = pipe.type.connections;
+                
+                for (let r = 0; r < 4; r++) {
+                    const rotatedConnections = originalConnections.map(dir => (dir + r) % 4);
+                    if (rotatedConnections.includes(targetDir)) {
+                        // 检查另一个方向是否也正确（如果是路径中间的水管）
+                        const otherDir = rotatedConnections.find(d => d !== targetDir);
+                        if (otherDir !== undefined) {
+                            const offset = DIRECTION_OFFSETS[otherDir];
+                            const otherRow = pipe.row + offset.dy;
+                            const otherCol = pipe.col + offset.dx;
+                            
+                            if (otherRow >= 0 && otherRow < CONFIG.GRID_SIZE &&
+                                otherCol >= 0 && otherCol < CONFIG.GRID_SIZE) {
+                                const otherPipe = this.grid[otherRow][otherCol];
+                                const oppositeDir = (otherDir + 2) % 4;
+                                if (otherPipe.hasConnection(oppositeDir) || otherPipe.isPath) {
+                                    // 计算从当前旋转到目标旋转需要的次数
+                                    return (r - pipe.rotation + 4) % 4 || 4;
+                                }
+                            }
+                        }
+                        return (r - pipe.rotation + 4) % 4 || 4;
+                    }
+                }
+                return -1;
+            }
+
+            // 检查水管是否已正确旋转
+            isPipeCorrectlyRotated(pipe) {
+                const connections = pipe.getConnections();
+                for (const dir of connections) {
+                    const offset = DIRECTION_OFFSETS[dir];
+                    const newRow = pipe.row + offset.dy;
+                    const newCol = pipe.col + offset.dx;
+                    
+                    if (newRow >= 0 && newRow < CONFIG.GRID_SIZE &&
+                        newCol >= 0 && newCol < CONFIG.GRID_SIZE) {
+                        const neighbor = this.grid[newRow][newCol];
+                        const oppositeDir = (dir + 2) % 4;
+                        if (neighbor.hasConnection(oppositeDir)) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+
+            // 绘制提示高亮
+            drawHintHighlight(row, col) {
+                const x = col * CONFIG.CELL_SIZE;
+                const y = row * CONFIG.CELL_SIZE;
+                
+                this.ctx.save();
+                this.ctx.strokeStyle = '#ffd700';
+                this.ctx.lineWidth = 4;
+                this.ctx.shadowColor = '#ffd700';
+                this.ctx.shadowBlur = 20;
+                this.ctx.strokeRect(x + 2, y + 2, CONFIG.CELL_SIZE - 4, CONFIG.CELL_SIZE - 4);
+                this.ctx.restore();
+            }
+
+            // 关闭提示弹窗
+            closeHint() {
+                document.getElementById('hintModal').style.display = 'none';
+                this.hintTarget = null;
+                this.draw();
+            }
+
+            // 计时器功能
+            startTimer() {
+                this.startTime = Date.now();
+                this.timerInterval = setInterval(() => {
+                    const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
+                    const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                    const seconds = (elapsed % 60).toString().padStart(2, '0');
+                    document.getElementById('timeCount').textContent = `${minutes}:${seconds}`;
+                }, 1000);
+            }
+
+            stopTimer() {
+                clearInterval(this.timerInterval);
+            }
+
+            resetTimer() {
+                this.stopTimer();
+                document.getElementById('timeCount').textContent = '00:00';
+            }
+
+            // 更新UI
+            updateUI() {
+                document.getElementById('moveCount').textContent = this.moveCount;
+            }
+
+            // 显示胜利弹窗
+            showVictory() {
+                document.getElementById('finalMoves').textContent = this.moveCount;
+                document.getElementById('finalTime').textContent = document.getElementById('timeCount').textContent;
+                document.getElementById('victoryModal').style.display = 'flex';
+            }
+
+            // 关闭胜利弹窗
+            closeVictory() {
+                document.getElementById('victoryModal').style.display = 'none';
+                this.newGame();
+            }
+        }
+
+        // 启动游戏
+        const game = new PipeGame();
+    </script>
+</body>
+</html>
