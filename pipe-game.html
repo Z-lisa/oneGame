@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>水管连接游戏</title>
+    <title>水管连接大冒险</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap');
+        
         * {
             margin: 0;
             padding: 0;
@@ -12,19 +14,35 @@
         }
 
         body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            font-family: 'ZCOOL KuaiLe', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             color: #fff;
+            overflow-x: hidden;
+        }
+
+        .game-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            padding: 20px;
         }
 
         h1 {
+            font-size: 48px;
             margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            text-shadow: 0 0 20px rgba(102, 126, 234, 0.8), 0 0 40px rgba(118, 75, 162, 0.6);
+            animation: titleGlow 2s ease-in-out infinite alternate;
+            text-align: center;
+        }
+
+        @keyframes titleGlow {
+            from { text-shadow: 0 0 20px rgba(102, 126, 234, 0.8), 0 0 40px rgba(118, 75, 162, 0.6); }
+            to { text-shadow: 0 0 30px rgba(102, 126, 234, 1), 0 0 60px rgba(118, 75, 162, 0.8), 0 0 80px rgba(255, 215, 0, 0.4); }
         }
 
         .game-container {
@@ -32,213 +50,657 @@
             flex-direction: column;
             align-items: center;
             gap: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 30px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .top-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 640px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .level-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 24px;
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .stars-display {
+            display: flex;
+            gap: 5px;
+            font-size: 28px;
+        }
+
+        .star {
+            color: #444;
+            transition: all 0.3s ease;
+        }
+
+        .star.active {
+            color: #ffd700;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+            animation: starPulse 0.5s ease;
+        }
+
+        @keyframes starPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); }
         }
 
         .info-panel {
             display: flex;
-            gap: 30px;
+            gap: 20px;
             font-size: 18px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         .info-item {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 10px 20px;
-            border-radius: 8px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+            padding: 12px 24px;
+            border-radius: 12px;
             backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .info-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .info-item.warning {
+            background: linear-gradient(135deg, rgba(255, 100, 100, 0.5), rgba(255, 50, 50, 0.5));
+            animation: warningPulse 0.5s ease infinite alternate;
+        }
+
+        .info-item.danger {
+            background: linear-gradient(135deg, rgba(255, 0, 0, 0.6), rgba(200, 0, 0, 0.6));
+            animation: dangerPulse 0.3s ease infinite alternate;
+        }
+
+        @keyframes warningPulse {
+            from { box-shadow: 0 0 5px rgba(255, 100, 100, 0.5); }
+            to { box-shadow: 0 0 20px rgba(255, 100, 100, 0.9); }
+        }
+
+        @keyframes dangerPulse {
+            from { box-shadow: 0 0 10px rgba(255, 0, 0, 0.7); }
+            to { box-shadow: 0 0 30px rgba(255, 0, 0, 1); }
+        }
+
+        .info-label {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            margin-right: 8px;
+        }
+
+        .info-value {
+            color: #00ff88;
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .info-item.warning .info-value,
+        .info-item.danger .info-value {
+            color: #ffcccc;
         }
 
         #gameCanvas {
-            border: 3px solid #4a90d9;
-            border-radius: 10px;
-            box-shadow: 0 0 30px rgba(74, 144, 217, 0.5);
+            border: 4px solid;
+            border-image: linear-gradient(135deg, #667eea, #764ba2, #f093fb) 1;
+            border-radius: 15px;
+            box-shadow: 
+                0 0 30px rgba(102, 126, 234, 0.5),
+                inset 0 0 30px rgba(0, 0, 0, 0.3);
             cursor: pointer;
+            background: radial-gradient(circle at center, #1a1a3e 0%, #0f0f2e 100%);
         }
 
         .controls {
             display: flex;
             gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         button {
-            padding: 12px 30px;
+            padding: 14px 32px;
             font-size: 16px;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
             cursor: pointer;
             transition: all 0.3s ease;
             font-weight: bold;
+            font-family: 'ZCOOL KuaiLe', sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        button:hover::before {
+            left: 100%;
         }
 
         .btn-primary {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.5);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
         }
 
         .btn-secondary {
-            background: rgba(255, 255, 255, 0.2);
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             color: white;
+            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
         }
 
         .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(245, 87, 108, 0.6);
         }
 
-        .victory-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .victory-content {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 40px 60px;
-            border-radius: 20px;
-            text-align: center;
-            animation: popIn 0.5s ease;
-        }
-
-        @keyframes popIn {
-            0% { transform: scale(0.5); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        .victory-content h2 {
-            font-size: 36px;
-            margin-bottom: 20px;
-        }
-
-        .victory-content p {
+        .btn-music {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 14px 20px;
             font-size: 20px;
-            margin-bottom: 30px;
+        }
+
+        .btn-music.muted {
+            background: linear-gradient(135deg, #666 0%, #999 100%);
         }
 
         .game-instructions {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 15px 25px;
-            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 20px 30px;
+            border-radius: 15px;
             backdrop-filter: blur(10px);
             text-align: center;
             font-size: 14px;
             line-height: 1.8;
-            max-width: 640px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .instruction-item {
             display: inline-flex;
             align-items: center;
-            margin: 0 15px;
+            margin: 5px 12px;
             gap: 8px;
+            padding: 5px 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 20px;
         }
 
         .color-dot {
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             display: inline-block;
+            box-shadow: 0 0 10px currentColor;
         }
 
-        .hint-highlight {
-            animation: hintPulse 1s ease-in-out 3;
+        .progress-bar {
+            width: 100%;
+            max-width: 640px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
         }
 
-        @keyframes hintPulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7); }
-            50% { box-shadow: 0 0 20px 10px rgba(255, 215, 0, 0.3); }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00d4ff);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
         }
 
-        .hint-modal {
+        /* 模态框样式 */
+        .modal {
             display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.85);
             justify-content: center;
             align-items: center;
-            z-index: 999;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
         }
 
-        .hint-content {
-            background: linear-gradient(135deg, #f5af19 0%, #f12711 100%);
-            padding: 30px 50px;
-            border-radius: 15px;
+        .modal-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 50px 70px;
+            border-radius: 25px;
             text-align: center;
-            animation: popIn 0.3s ease;
+            animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.5),
+                0 0 100px rgba(102, 126, 234, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
         }
 
-        .hint-content h3 {
-            font-size: 24px;
+        .modal-content::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.3) rotate(-10deg); opacity: 0; }
+            70% { transform: scale(1.1) rotate(3deg); }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        .victory-content h2 {
+            font-size: 48px;
+            margin-bottom: 25px;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+            animation: victoryBounce 1s ease infinite;
+        }
+
+        @keyframes victoryBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .victory-stars {
+            font-size: 60px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .victory-stars .star {
+            animation: starAppear 0.5s ease backwards;
+        }
+
+        .victory-stars .star:nth-child(1) { animation-delay: 0.2s; }
+        .victory-stars .star:nth-child(2) { animation-delay: 0.4s; }
+        .victory-stars .star:nth-child(3) { animation-delay: 0.6s; }
+
+        @keyframes starAppear {
+            0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        .modal-content p {
+            font-size: 22px;
             margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
         }
 
-        .hint-content p {
-            font-size: 16px;
-            margin-bottom: 20px;
+        .score-display {
+            font-size: 36px;
+            color: #ffd700;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+            margin: 15px 0;
+        }
+
+        .hint-highlight {
+            animation: hintPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes hintPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.8), inset 0 0 20px rgba(255, 215, 0, 0.3); }
+            50% { box-shadow: 0 0 30px 15px rgba(255, 215, 0, 0.4), inset 0 0 30px rgba(255, 215, 0, 0.5); }
+        }
+
+        /* 菜单模态框 */
+        .menu-content {
+            background: linear-gradient(135deg, #1a1a3e 0%, #302b63 50%, #24243e 100%);
+            padding: 50px 60px;
+            max-width: 600px;
+            border-radius: 30px;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            box-shadow: 
+                0 25px 80px rgba(0, 0, 0, 0.6),
+                0 0 60px rgba(102, 126, 234, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .menu-content h2 {
+            font-size: 42px;
+            margin-bottom: 40px;
+            color: #ffd700;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+            position: relative;
+            display: inline-block;
+        }
+
+        .menu-content h2::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, #ffd700, transparent);
+            border-radius: 2px;
+        }
+
+        .level-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 18px;
+            margin: 40px 0;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .level-btn {
+            width: 75px;
+            height: 75px;
+            border-radius: 18px;
+            font-size: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            color: white;
+            font-family: 'ZCOOL KuaiLe', sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .level-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .level-btn:hover::before {
+            left: 100%;
+        }
+
+        .level-btn:hover {
+            transform: translateY(-5px) scale(1.08);
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.6), rgba(118, 75, 162, 0.6));
+            border-color: #667eea;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .level-btn.locked {
+            opacity: 0.35;
+            cursor: not-allowed;
+            background: linear-gradient(135deg, rgba(100, 100, 100, 0.2), rgba(80, 80, 80, 0.1));
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .level-btn.locked:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .level-btn.completed {
+            background: linear-gradient(135deg, #00d4ff, #00ff88);
+            border-color: #00ff88;
+            box-shadow: 0 5px 20px rgba(0, 255, 136, 0.3);
+        }
+
+        .level-btn.completed:hover {
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.5);
+        }
+
+        .level-btn.current {
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            border-color: #ffd700;
+            animation: currentLevel 2s ease infinite;
+            box-shadow: 0 5px 25px rgba(255, 215, 0, 0.4);
+        }
+
+        .level-btn.current:hover {
+            box-shadow: 0 10px 35px rgba(255, 215, 0, 0.6);
+        }
+
+        @keyframes currentLevel {
+            0%, 100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+            50% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.9); }
+        }
+
+        .level-btn .level-stars {
+            position: absolute;
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: #ffd700;
+            text-shadow: 0 0 5px rgba(255, 215, 0, 0.8);
+            letter-spacing: -2px;
+        }
+
+        .level-btn {
+            position: relative;
+        }
+
+        /* 粒子效果容器 */
+        #particles-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            border-radius: 50%;
+        }
+
+        /* 连击显示 */
+        .combo-display {
+            position: fixed;
+            font-size: 48px;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+            pointer-events: none;
+            z-index: 100;
+            animation: comboPop 1s ease forwards;
+        }
+
+        @keyframes comboPop {
+            0% { transform: scale(0) rotate(-20deg); opacity: 0; }
+            20% { transform: scale(1.5) rotate(5deg); opacity: 1; }
+            80% { transform: scale(1) rotate(0deg); opacity: 1; }
+            100% { transform: scale(0.8) translateY(-50px); opacity: 0; }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            h1 { font-size: 32px; }
+            .game-container { padding: 15px; }
+            .menu-content { padding: 30px 40px; max-width: 90vw; }
+            .menu-content h2 { font-size: 32px; }
+            .level-grid { grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 15px; }
+            .level-btn { width: 60px; height: 60px; font-size: 20px; }
+        }
+
+        @media (max-width: 480px) {
+            .level-grid { grid-template-columns: repeat(3, 1fr); }
+            .level-btn { width: 55px; height: 55px; font-size: 18px; }
+            .menu-content { padding: 25px 30px; }
         }
     </style>
 </head>
 <body>
-    <h1>水管连接游戏</h1>
-    <div class="game-container">
-        <div class="info-panel">
-            <div class="info-item">步数: <span id="moveCount">0</span></div>
-            <div class="info-item">时间: <span id="timeCount">00:00</span></div>
-        </div>
-        <canvas id="gameCanvas" width="640" height="640"></canvas>
-        <div class="controls">
-            <button class="btn-primary" onclick="game.newGame()">新游戏</button>
-            <button class="btn-secondary" onclick="game.showHint()">提示</button>
-        </div>
+    <div id="particles-container"></div>
+    
+    <div class="game-wrapper">
+        <h1>水管连接大冒险</h1>
+        
+        <div class="game-container">
+            <div class="top-panel">
+                <div class="level-info">
+                    <span>关卡</span>
+                    <span id="currentLevel">1</span>
+                    <div class="stars-display" id="levelStars">
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                    </div>
+                </div>
+                <button class="btn-music" id="musicBtn" onclick="game.toggleMusic()">🎵</button>
+            </div>
 
-        <div class="game-instructions">
-            <div class="instruction-item">
-                <span class="color-dot" style="background: #ff6b6b;"></span>
-                <span>S为起点</span>
+            <div class="info-panel">
+                <div class="info-item">
+                    <span class="info-label">步数</span>
+                    <span class="info-value" id="moveCount">0</span>
+                </div>
+                <div class="info-item" id="timeItem">
+                    <span class="info-label">剩余时间</span>
+                    <span class="info-value" id="timeCount">03:00</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">得分</span>
+                    <span class="info-value" id="scoreDisplay">0</span>
+                </div>
             </div>
-            <div class="instruction-item">
-                <span class="color-dot" style="background: #ffd93d;"></span>
-                <span>E为终点</span>
+
+            <canvas id="gameCanvas" width="640" height="640"></canvas>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
             </div>
-            <div class="instruction-item">
-                <span class="color-dot" style="background: #00ff88;"></span>
-                <span>绿色为已连通</span>
+
+            <div class="controls">
+                <button class="btn-primary" onclick="game.newGame()">新游戏</button>
+                <button class="btn-secondary" onclick="game.showHint()">💡 提示</button>
+                <button class="btn-secondary" onclick="game.showMenu()">📋 关卡</button>
             </div>
-            <div class="instruction-item">
-                <span class="color-dot" style="background: #4a90d9;"></span>
-                <span>蓝色为待连通</span>
-            </div>
-            <div style="margin-top: 10px; color: rgba(255,255,255,0.7);">
-                点击水管可旋转，将S和E连通即可通关
+
+            <div class="game-instructions">
+                <div class="instruction-item">
+                    <span class="color-dot" style="background: #ff6b6b;"></span>
+                    <span>S为起点</span>
+                </div>
+                <div class="instruction-item">
+                    <span class="color-dot" style="background: #ffd93d;"></span>
+                    <span>E为终点</span>
+                </div>
+                <div class="instruction-item">
+                    <span class="color-dot" style="background: #00ff88;"></span>
+                    <span>绿色为已连通</span>
+                </div>
+                <div class="instruction-item">
+                    <span class="color-dot" style="background: #4a90d9;"></span>
+                    <span>蓝色为待连通</span>
+                </div>
+                <div style="margin-top: 10px; color: rgba(255,255,255,0.7);">
+                    点击水管可旋转，将S和E连通即可通关！3分钟内完成挑战！
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="hint-modal" id="hintModal">
-        <div class="hint-content">
-            <h3>提示</h3>
+    <!-- 提示模态框 -->
+    <div class="modal" id="hintModal">
+        <div class="modal-content">
+            <h3 style="font-size: 28px; margin-bottom: 15px;">💡 提示</h3>
             <p id="hintText">正在寻找下一个需要调整的水管...</p>
-            <button class="btn-primary" onclick="game.closeHint()">知道了</button>
+            <button class="btn-primary" onclick="game.closeHint()" style="margin-top: 20px;">知道了</button>
         </div>
     </div>
 
-    <div class="victory-modal" id="victoryModal">
-        <div class="victory-content">
-            <h2>恭喜通关!</h2>
-            <p>步数: <span id="finalMoves">0</span> | 时间: <span id="finalTime">00:00</span></p>
-            <button class="btn-primary" onclick="game.closeVictory()">再玩一局</button>
+    <!-- 胜利模态框 -->
+    <div class="modal" id="victoryModal">
+        <div class="modal-content victory-content">
+            <h2>🎉 恭喜通关! 🎉</h2>
+            <div class="victory-stars" id="victoryStars">
+                <span class="star">★</span>
+                <span class="star">★</span>
+                <span class="star">★</span>
+            </div>
+            <div class="score-display" id="victoryScore">0</div>
+            <p>步数: <span id="finalMoves">0</span> | 剩余时间: <span id="finalTime">00:00</span></p>
+            <p id="perfectBonus" style="color: #ffd700; font-size: 18px; margin-top: 10px;"></p>
+            <div style="margin-top: 25px; display: flex; gap: 15px; justify-content: center;">
+                <button class="btn-primary" onclick="game.nextLevel()">下一关 ➡</button>
+                <button class="btn-secondary" onclick="game.closeVictory()">重玩本关</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 游戏结束模态框 -->
+    <div class="modal" id="gameOverModal">
+        <div class="modal-content" style="background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);">
+            <h2 style="font-size: 42px; margin-bottom: 20px;">⏰ 时间到!</h2>
+            <p style="font-size: 24px; margin-bottom: 15px;">挑战失败</p>
+            <p style="font-size: 18px; margin-bottom: 25px; opacity: 0.9;">3分钟时间已用完，再试一次吧！</p>
+            <div style="margin-top: 20px; display: flex; gap: 15px; justify-content: center;">
+                <button class="btn-primary" onclick="game.retryLevel()" style="background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);">再试一次</button>
+                <button class="btn-secondary" onclick="game.closeGameOver()">返回菜单</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 菜单模态框 -->
+    <div class="modal" id="menuModal">
+        <div class="modal-content menu-content">
+            <h2>选择关卡</h2>
+            <div class="level-grid" id="levelGrid"></div>
+            <button class="btn-secondary" onclick="game.closeMenu()" style="margin-top: 20px;">返回游戏</button>
         </div>
     </div>
 
@@ -248,43 +710,255 @@
             GRID_SIZE: 8,
             CELL_SIZE: 80,
             PIPE_WIDTH: 20,
+            ANIMATION_SPEED: 150,
+            GAME_TIME: 180, // 3分钟 = 180秒
             COLORS: {
                 PIPE: '#4a90d9',
                 PIPE_ACTIVE: '#00ff88',
                 PIPE_EMPTY: '#2a3f5f',
                 START: '#ff6b6b',
                 END: '#ffd93d',
-                BG: '#1a1a2e'
+                BG: '#1a1a3e',
+                WATER: '#00d4ff'
             }
         };
 
-        // 方向定义: 0=上, 1=右, 2=下, 3=左
-        const DIRECTIONS = {
-            UP: 0,
-            RIGHT: 1,
-            DOWN: 2,
-            LEFT: 3
-        };
-
-        // 方向偏移量 [上, 右, 下, 左]
+        // 方向定义
+        const DIRECTIONS = { UP: 0, RIGHT: 1, DOWN: 2, LEFT: 3 };
         const DIRECTION_OFFSETS = [
-            { dx: 0, dy: -1 },  // 上
-            { dx: 1, dy: 0 },   // 右
-            { dx: 0, dy: 1 },   // 下
-            { dx: -1, dy: 0 }   // 左
+            { dx: 0, dy: -1 }, { dx: 1, dy: 0 },
+            { dx: 0, dy: 1 }, { dx: -1, dy: 0 }
         ];
 
-        // 水管类型定义
-        // 每个类型包含连接的方向数组
+        // 水管类型
         const PIPE_TYPES = {
             EMPTY: { id: 0, connections: [], name: '空' },
-            VERTICAL: { id: 1, connections: [0, 2], name: '上下' },      // 上下通
-            HORIZONTAL: { id: 2, connections: [1, 3], name: '左右' },    // 左右通
-            UP_RIGHT: { id: 3, connections: [0, 1], name: '上右' },      // 上右通
-            RIGHT_DOWN: { id: 4, connections: [1, 2], name: '右下' },    // 右下通
-            DOWN_LEFT: { id: 5, connections: [2, 3], name: '下左' },     // 下左通
-            LEFT_UP: { id: 6, connections: [3, 0], name: '左上' }        // 左上通
+            VERTICAL: { id: 1, connections: [0, 2], name: '上下' },
+            HORIZONTAL: { id: 2, connections: [1, 3], name: '左右' },
+            UP_RIGHT: { id: 3, connections: [0, 1], name: '上右' },
+            RIGHT_DOWN: { id: 4, connections: [1, 2], name: '右下' },
+            DOWN_LEFT: { id: 5, connections: [2, 3], name: '下左' },
+            LEFT_UP: { id: 6, connections: [3, 0], name: '左上' }
         };
+
+        // 音频管理器 - 使用Web Audio API生成背景音乐和音效
+        class AudioManager {
+            constructor() {
+                this.enabled = true;
+                this.audioContext = null;
+                this.backgroundMusic = null;
+                this.isMusicPlaying = false;
+                this.initAudio();
+            }
+
+            initAudio() {
+                // 音频上下文将在第一次用户交互时创建
+                this.audioContext = null;
+                this.setupSoundEffects();
+            }
+
+            ensureAudioContext() {
+                if (!this.audioContext) {
+                    try {
+                        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    } catch (e) {
+                        console.log('Web Audio API not supported');
+                        return false;
+                    }
+                }
+                // 恢复暂停的音频上下文
+                if (this.audioContext.state === 'suspended') {
+                    this.audioContext.resume();
+                }
+                return true;
+            }
+
+            setupSoundEffects() {
+                // 预定义音效参数
+                this.soundEffects = {
+                    rotate: { freq: 440, type: 'sine', duration: 0.1, slide: 100 },
+                    connect: { freq: 600, type: 'sine', duration: 0.15, slide: 200 },
+                    victory: { freq: 523.25, type: 'sine', duration: 0.4, arpeggio: [523.25, 659.25, 783.99, 1046.50] },
+                    click: { freq: 800, type: 'triangle', duration: 0.05 },
+                    water: { freq: 200, type: 'sine', duration: 0.3, slide: -50 },
+                    gameover: { freq: 300, type: 'sawtooth', duration: 0.5, slide: -100 }
+                };
+            }
+
+            // 播放背景音乐 - 使用简单的旋律循环
+            playBackgroundMusic() {
+                if (!this.enabled || this.isMusicPlaying) return;
+                
+                // 确保音频上下文已创建并恢复
+                if (!this.ensureAudioContext()) return;
+                
+                this.isMusicPlaying = true;
+                const notes = [261.63, 329.63, 392.00, 523.25, 392.00, 329.63]; // C大调琶音
+                let noteIndex = 0;
+                
+                const playNote = () => {
+                    if (!this.isMusicPlaying || !this.enabled) return;
+                    
+                    const osc = this.audioContext.createOscillator();
+                    const gain = this.audioContext.createGain();
+                    
+                    osc.connect(gain);
+                    gain.connect(this.audioContext.destination);
+                    
+                    osc.frequency.value = notes[noteIndex];
+                    osc.type = 'sine';
+                    
+                    gain.gain.setValueAtTime(0.05, this.audioContext.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.4);
+                    
+                    osc.start(this.audioContext.currentTime);
+                    osc.stop(this.audioContext.currentTime + 0.4);
+                    
+                    noteIndex = (noteIndex + 1) % notes.length;
+                    this.backgroundMusic = setTimeout(playNote, 500);
+                };
+                
+                playNote();
+            }
+
+            stopBackgroundMusic() {
+                this.isMusicPlaying = false;
+                if (this.backgroundMusic) {
+                    clearTimeout(this.backgroundMusic);
+                    this.backgroundMusic = null;
+                }
+            }
+
+            playSound(name) {
+                if (!this.enabled || !this.soundEffects[name]) return;
+                
+                // 确保音频上下文已创建并恢复
+                if (!this.ensureAudioContext()) return;
+                
+                const effect = this.soundEffects[name];
+                
+                if (effect.arpeggio) {
+                    // 播放琶音
+                    let time = this.audioContext.currentTime;
+                    effect.arpeggio.forEach((freq, i) => {
+                        const o = this.audioContext.createOscillator();
+                        const g = this.audioContext.createGain();
+                        o.connect(g);
+                        g.connect(this.audioContext.destination);
+                        o.frequency.value = freq;
+                        o.type = effect.type;
+                        g.gain.setValueAtTime(0.15, time + i * 0.1);
+                        g.gain.exponentialRampToValueAtTime(0.01, time + i * 0.1 + 0.3);
+                        o.start(time + i * 0.1);
+                        o.stop(time + i * 0.1 + 0.3);
+                    });
+                } else {
+                    const osc = this.audioContext.createOscillator();
+                    const gain = this.audioContext.createGain();
+                    
+                    osc.connect(gain);
+                    gain.connect(this.audioContext.destination);
+                    
+                    osc.frequency.value = effect.freq;
+                    osc.type = effect.type;
+                    
+                    if (effect.slide) {
+                        osc.frequency.linearRampToValueAtTime(
+                            effect.freq + effect.slide,
+                            this.audioContext.currentTime + effect.duration
+                        );
+                    }
+                    
+                    gain.gain.setValueAtTime(0.15, this.audioContext.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(
+                        0.01,
+                        this.audioContext.currentTime + effect.duration
+                    );
+                    
+                    osc.start(this.audioContext.currentTime);
+                    osc.stop(this.audioContext.currentTime + effect.duration);
+                }
+            }
+
+            toggle() {
+                this.enabled = !this.enabled;
+                if (this.enabled) {
+                    this.playBackgroundMusic();
+                } else {
+                    this.stopBackgroundMusic();
+                }
+                return this.enabled;
+            }
+        }
+
+        // 粒子系统
+        class ParticleSystem {
+            constructor() {
+                this.container = document.getElementById('particles-container');
+                this.particles = [];
+            }
+
+            createExplosion(x, y, color, count = 20) {
+                for (let i = 0; i < count; i++) {
+                    this.createParticle(x, y, color);
+                }
+            }
+
+            createParticle(x, y, color) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                const size = Math.random() * 10 + 5;
+                const angle = Math.random() * Math.PI * 2;
+                const velocity = Math.random() * 150 + 50;
+                const lifetime = Math.random() * 1000 + 500;
+                
+                particle.style.cssText = `
+                    width: ${size}px;
+                    height: ${size}px;
+                    background: ${color};
+                    left: ${x}px;
+                    top: ${y}px;
+                    box-shadow: 0 0 ${size}px ${color};
+                `;
+                
+                this.container.appendChild(particle);
+                
+                const startTime = Date.now();
+                const animate = () => {
+                    const elapsed = Date.now() - startTime;
+                    const progress = elapsed / lifetime;
+                    
+                    if (progress >= 1) {
+                        particle.remove();
+                        return;
+                    }
+                    
+                    const dx = Math.cos(angle) * velocity * progress;
+                    const dy = Math.sin(angle) * velocity * progress + 50 * progress * progress;
+                    const opacity = 1 - progress;
+                    const scale = 1 - progress * 0.5;
+                    
+                    particle.style.transform = `translate(${dx}px, ${dy}px) scale(${scale})`;
+                    particle.style.opacity = opacity;
+                    
+                    requestAnimationFrame(animate);
+                };
+                
+                requestAnimationFrame(animate);
+            }
+
+            showCombo(x, y, combo) {
+                const display = document.createElement('div');
+                display.className = 'combo-display';
+                display.textContent = `${combo} 连击!`;
+                display.style.left = `${x}px`;
+                display.style.top = `${y}px`;
+                this.container.appendChild(display);
+                
+                setTimeout(() => display.remove(), 1000);
+            }
+        }
 
         // 水管类
         class Pipe {
@@ -292,29 +966,44 @@
                 this.type = type;
                 this.row = row;
                 this.col = col;
-                this.rotation = 0; // 0, 1, 2, 3 对应 0, 90, 180, 270 度
+                this.rotation = 0;
+                this.targetRotation = 0;
                 this.isConnected = false;
-                this.isPath = false; // 是否是主路径
+                this.isPath = false;
+                this.waterLevel = 0;
+                this.animating = false;
             }
 
-            // 获取当前旋转后的连接方向
             getConnections() {
                 return this.type.connections.map(dir => (dir + this.rotation) % 4);
             }
 
-            // 检查是否连接到某个方向
             hasConnection(direction) {
                 return this.getConnections().includes(direction);
             }
 
-            // 旋转水管
             rotate() {
-                this.rotation = (this.rotation + 1) % 4;
+                this.targetRotation = (this.rotation + 1) % 4;
+                this.animating = true;
             }
 
-            // 设置随机旋转
             randomRotate() {
                 this.rotation = Math.floor(Math.random() * 4);
+                this.targetRotation = this.rotation;
+            }
+
+            update(deltaTime) {
+                if (this.animating) {
+                    const diff = this.targetRotation - this.rotation;
+                    const speed = deltaTime * 0.01;
+                    
+                    if (Math.abs(diff) < speed || Math.abs(diff) > 3.5) {
+                        this.rotation = this.targetRotation;
+                        this.animating = false;
+                    } else {
+                        this.rotation += Math.sign(diff) * speed;
+                    }
+                }
             }
         }
 
@@ -323,70 +1012,139 @@
             constructor() {
                 this.canvas = document.getElementById('gameCanvas');
                 this.ctx = this.canvas.getContext('2d');
+                this.audio = new AudioManager();
+                this.particles = new ParticleSystem();
                 this.grid = [];
                 this.startPos = null;
                 this.endPos = null;
                 this.moveCount = 0;
-                this.startTime = null;
+                this.remainingTime = CONFIG.GAME_TIME;
                 this.timerInterval = null;
                 this.isVictory = false;
-                this.pathCells = []; // 存储主路径的格子
-                this.hintTarget = null; // 提示目标位置
-
+                this.isGameOver = false;
+                this.pathCells = [];
+                this.hintTarget = null;
+                this.currentLevel = 1;
+                this.maxLevel = 20;
+                this.score = 0;
+                this.combo = 0;
+                this.lastMoveTime = 0;
+                this.completedLevels = JSON.parse(localStorage.getItem('pipeGameLevels') || '[]');
+                this.levelStars = JSON.parse(localStorage.getItem('pipeGameStars') || '{}');
+                this.animationId = null;
+                this.lastTime = 0;
+                this.waterFlow = 0;
+                
                 this.init();
             }
 
             init() {
                 this.canvas.addEventListener('click', (e) => this.handleClick(e));
                 this.newGame();
+                this.startAnimationLoop();
             }
 
-            // 生成新游戏
+            startAnimationLoop() {
+                const loop = (currentTime) => {
+                    const deltaTime = currentTime - this.lastTime;
+                    this.lastTime = currentTime;
+                    
+                    this.update(deltaTime);
+                    this.draw();
+                    
+                    this.animationId = requestAnimationFrame(loop);
+                };
+                this.animationId = requestAnimationFrame(loop);
+            }
+
+            update(deltaTime) {
+                // 更新水管动画
+                for (let row = 0; row < CONFIG.GRID_SIZE; row++) {
+                    for (let col = 0; col < CONFIG.GRID_SIZE; col++) {
+                        this.grid[row][col].update(deltaTime);
+                    }
+                }
+                
+                // 更新水流动画
+                if (this.isVictory) {
+                    this.waterFlow += deltaTime * 0.002;
+                    if (this.waterFlow > 1) this.waterFlow = 0;
+                }
+            }
+
+            startTimer() {
+                this.stopTimer();
+                this.timerInterval = setInterval(() => {
+                    if (this.isVictory || this.isGameOver) return;
+                    this.remainingTime--;
+                    this.updateUI();
+                    if (this.remainingTime <= 0) {
+                        this.gameOver();
+                    }
+                }, 1000);
+            }
+
+            stopTimer() {
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                    this.timerInterval = null;
+                }
+            }
+
+            resetTimer() {
+                this.stopTimer();
+                this.remainingTime = CONFIG.GAME_TIME;
+            }
+
             newGame() {
                 this.moveCount = 0;
                 this.isVictory = false;
+                this.isGameOver = false;
                 this.pathCells = [];
+                this.score = 0;
+                this.combo = 0;
+                this.waterFlow = 0;
+                this.remainingTime = CONFIG.GAME_TIME;
                 this.updateUI();
                 this.resetTimer();
                 this.startTimer();
                 this.generateLevel();
-                this.draw();
+                this.updateProgress();
+                
+                // 开始播放背景音乐
+                if (this.audio.enabled) {
+                    this.audio.playBackgroundMusic();
+                }
             }
 
-            // 使用路径扩展法生成关卡
             generateLevel() {
-                // 初始化空网格
+                const size = Math.min(6 + Math.floor(this.currentLevel / 3), 10);
+                CONFIG.GRID_SIZE = size;
+                CONFIG.CELL_SIZE = Math.floor(640 / size);
+                
                 this.grid = [];
-                for (let row = 0; row < CONFIG.GRID_SIZE; row++) {
+                for (let row = 0; row < size; row++) {
                     this.grid[row] = [];
-                    for (let col = 0; col < CONFIG.GRID_SIZE; col++) {
+                    for (let col = 0; col < size; col++) {
                         this.grid[row][col] = new Pipe(PIPE_TYPES.EMPTY, row, col);
                     }
                 }
 
-                // 随机选择起点和终点（不同边缘）
                 const edges = ['top', 'right', 'bottom', 'left'];
                 const startEdge = edges[Math.floor(Math.random() * edges.length)];
                 let endEdge;
-                do {
-                    endEdge = edges[Math.floor(Math.random() * edges.length)];
-                } while (endEdge === startEdge);
+                do { endEdge = edges[Math.floor(Math.random() * edges.length)]; }
+                while (endEdge === startEdge);
 
-                // 在边缘上选择起点和终点位置
                 this.startPos = this.getRandomEdgePosition(startEdge);
                 this.endPos = this.getRandomEdgePosition(endEdge);
 
-                // 使用DFS生成路径
                 this.generatePath();
-
-                // 填充剩余格子
                 this.fillEmptyCells();
-
-                // 随机旋转路径上的水管
                 this.scramblePathPipes();
+                this.checkVictory(false);
             }
 
-            // 获取边缘随机位置
             getRandomEdgePosition(edge) {
                 const size = CONFIG.GRID_SIZE;
                 switch (edge) {
@@ -397,13 +1155,11 @@
                 }
             }
 
-            // 生成路径（DFS）
             generatePath() {
                 const visited = new Set();
                 const path = [];
 
                 const dfs = (row, col) => {
-                    // 到达终点
                     if (row === this.endPos.row && col === this.endPos.col) {
                         path.push({ row, col });
                         return true;
@@ -412,19 +1168,14 @@
                     visited.add(`${row},${col}`);
                     path.push({ row, col });
 
-                    // 获取所有可能的下一个位置
                     const neighbors = this.getValidNeighbors(row, col, visited);
-
-                    // 随机打乱邻居顺序
                     for (let i = neighbors.length - 1; i > 0; i--) {
                         const j = Math.floor(Math.random() * (i + 1));
                         [neighbors[i], neighbors[j]] = [neighbors[j], neighbors[i]];
                     }
 
                     for (const neighbor of neighbors) {
-                        if (dfs(neighbor.row, neighbor.col)) {
-                            return true;
-                        }
+                        if (dfs(neighbor.row, neighbor.col)) return true;
                     }
 
                     path.pop();
@@ -432,9 +1183,8 @@
                 };
 
                 dfs(this.startPos.row, this.startPos.col);
-
-                // 根据路径设置水管类型
                 this.pathCells = path;
+
                 for (let i = 0; i < path.length; i++) {
                     const current = path[i];
                     const prev = i > 0 ? path[i - 1] : null;
@@ -443,30 +1193,18 @@
                     const pipe = this.grid[current.row][current.col];
                     pipe.isPath = true;
 
-                    // 确定连接方向
                     const connections = [];
-                    if (prev) {
-                        connections.push(this.getDirection(current, prev));
-                    }
-                    if (next) {
-                        connections.push(this.getDirection(current, next));
-                    }
+                    if (prev) connections.push(this.getDirection(current, prev));
+                    if (next) connections.push(this.getDirection(current, next));
 
-                    // 根据连接方向确定水管类型
                     pipe.type = this.getPipeTypeByConnections(connections);
-                    pipe.rotation = 0; // 初始无旋转
+                    pipe.rotation = 0;
                 }
             }
 
-            // 获取有效的邻居位置
             getValidNeighbors(row, col, visited) {
                 const neighbors = [];
-                const directions = [
-                    { dr: -1, dc: 0 }, // 上
-                    { dr: 1, dc: 0 },  // 下
-                    { dr: 0, dc: -1 }, // 左
-                    { dr: 0, dc: 1 }   // 右
-                ];
+                const directions = [{ dr: -1, dc: 0 }, { dr: 1, dc: 0 }, { dr: 0, dc: -1 }, { dr: 0, dc: 1 }];
 
                 for (const dir of directions) {
                     const newRow = row + dir.dr;
@@ -482,7 +1220,6 @@
                 return neighbors;
             }
 
-            // 获取从一个位置到另一个位置的方向
             getDirection(from, to) {
                 if (to.row < from.row) return DIRECTIONS.UP;
                 if (to.row > from.row) return DIRECTIONS.DOWN;
@@ -490,18 +1227,11 @@
                 if (to.col > from.col) return DIRECTIONS.RIGHT;
             }
 
-            // 根据连接方向获取水管类型
             getPipeTypeByConnections(connections) {
                 if (connections.length === 1) {
-                    // 起点或终点，只有一个连接
-                    // 默认使用直通管，让另一个方向与边缘对齐
                     const dir = connections[0];
-                    // 如果连接方向是上下，使用上下通；如果是左右，使用左右通
-                    if (dir === DIRECTIONS.UP || dir === DIRECTIONS.DOWN) {
-                        return PIPE_TYPES.VERTICAL;
-                    } else {
-                        return PIPE_TYPES.HORIZONTAL;
-                    }
+                    return (dir === DIRECTIONS.UP || dir === DIRECTIONS.DOWN) 
+                        ? PIPE_TYPES.VERTICAL : PIPE_TYPES.HORIZONTAL;
                 }
 
                 const sorted = connections.sort((a, b) => a - b);
@@ -518,44 +1248,58 @@
                 }
             }
 
-            // 填充空格子
             fillEmptyCells() {
-                const nonEmptyTypes = [
-                    PIPE_TYPES.VERTICAL,
-                    PIPE_TYPES.HORIZONTAL,
-                    PIPE_TYPES.UP_RIGHT,
-                    PIPE_TYPES.RIGHT_DOWN,
-                    PIPE_TYPES.DOWN_LEFT,
-                    PIPE_TYPES.LEFT_UP
-                ];
+                const types = [PIPE_TYPES.VERTICAL, PIPE_TYPES.HORIZONTAL, 
+                    PIPE_TYPES.UP_RIGHT, PIPE_TYPES.RIGHT_DOWN, 
+                    PIPE_TYPES.DOWN_LEFT, PIPE_TYPES.LEFT_UP];
 
                 for (let row = 0; row < CONFIG.GRID_SIZE; row++) {
                     for (let col = 0; col < CONFIG.GRID_SIZE; col++) {
                         const pipe = this.grid[row][col];
                         if (pipe.type === PIPE_TYPES.EMPTY) {
-                            // 随机选择一个非空水管类型
-                            pipe.type = nonEmptyTypes[Math.floor(Math.random() * nonEmptyTypes.length)];
+                            pipe.type = types[Math.floor(Math.random() * types.length)];
                             pipe.randomRotate();
                         }
                     }
                 }
             }
 
-            // 打乱路径上的水管
             scramblePathPipes() {
                 for (const pos of this.pathCells) {
                     const pipe = this.grid[pos.row][pos.col];
-                    // 随机旋转 1-3 次（确保不保持原样）
                     const rotations = Math.floor(Math.random() * 3) + 1;
-                    for (let i = 0; i < rotations; i++) {
-                        pipe.rotate();
-                    }
+                    for (let i = 0; i < rotations; i++) pipe.rotation++;
+                    pipe.targetRotation = pipe.rotation % 4;
                 }
             }
 
-            // 处理点击事件
+            updateUI() {
+                document.getElementById('moveCount').textContent = this.moveCount;
+                document.getElementById('timeCount').textContent = this.formatTime(this.remainingTime);
+                document.getElementById('scoreDisplay').textContent = this.score;
+                document.getElementById('currentLevel').textContent = this.currentLevel;
+                
+                // 更新时间样式
+                const timeItem = document.getElementById('timeItem');
+                if (this.remainingTime <= 30) {
+                    timeItem.classList.add('danger');
+                    timeItem.classList.remove('warning');
+                } else if (this.remainingTime <= 60) {
+                    timeItem.classList.add('warning');
+                    timeItem.classList.remove('danger');
+                } else {
+                    timeItem.classList.remove('warning', 'danger');
+                }
+            }
+
+            formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+
             handleClick(e) {
-                if (this.isVictory) return;
+                if (this.isVictory || this.isGameOver) return;
 
                 const rect = this.canvas.getBoundingClientRect();
                 const x = e.clientX - rect.left;
@@ -565,32 +1309,65 @@
                 const row = Math.floor(y / CONFIG.CELL_SIZE);
 
                 if (row >= 0 && row < CONFIG.GRID_SIZE && col >= 0 && col < CONFIG.GRID_SIZE) {
-                    this.grid[row][col].rotate();
+                    const pipe = this.grid[row][col];
+                    pipe.rotate();
+                    
+                    // 连击系统
+                    const now = Date.now();
+                    if (now - this.lastMoveTime < 2000) {
+                        this.combo++;
+                        if (this.combo > 1) {
+                            this.score += this.combo * 10;
+                            this.particles.showCombo(e.clientX, e.clientY, this.combo);
+                        }
+                    } else {
+                        this.combo = 1;
+                    }
+                    this.lastMoveTime = now;
+                    
                     this.moveCount++;
+                    this.score += 5;
                     this.updateUI();
-                    this.draw();
+                    this.audio.playSound('rotate');
+                    
+                    // 粒子效果
+                    const centerX = rect.left + col * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
+                    const centerY = rect.top + row * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
+                    this.particles.createExplosion(centerX, centerY, '#4a90d9', 8);
+                    
                     this.checkVictory();
                 }
             }
 
-            // 检查是否通关
-            checkVictory() {
-                // 从起点开始BFS检查连通性
+            checkVictory(playSound = true) {
                 const connected = this.checkConnectivity();
-
-                // 高亮连通的水管
                 this.updateConnectedState(connected);
-                this.draw();
+                this.updateProgress();
 
-                // 检查起点到终点是否连通
-                if (connected[this.endPos.row][this.endPos.col]) {
+                if (connected[this.endPos.row][this.endPos.col] && !this.isVictory) {
                     this.isVictory = true;
                     this.stopTimer();
-                    setTimeout(() => this.showVictory(), 300);
+                    this.audio.stopBackgroundMusic();
+                    if (playSound) {
+                        this.audio.playSound('victory');
+                        this.createVictoryParticles();
+                    }
+                    setTimeout(() => this.showVictory(), 500);
                 }
             }
 
-            // 检查连通性（BFS）
+            createVictoryParticles() {
+                const rect = this.canvas.getBoundingClientRect();
+                for (let i = 0; i < 5; i++) {
+                    setTimeout(() => {
+                        const x = rect.left + Math.random() * rect.width;
+                        const y = rect.top + Math.random() * rect.height;
+                        const colors = ['#ffd700', '#ff6b6b', '#00ff88', '#4a90d9', '#f093fb'];
+                        this.particles.createExplosion(x, y, colors[Math.floor(Math.random() * colors.length)], 30);
+                    }, i * 200);
+                }
+            }
+
             checkConnectivity() {
                 const connected = Array(CONFIG.GRID_SIZE).fill(null)
                     .map(() => Array(CONFIG.GRID_SIZE).fill(false));
@@ -625,7 +1402,6 @@
                 return connected;
             }
 
-            // 更新连通状态
             updateConnectedState(connected) {
                 for (let row = 0; row < CONFIG.GRID_SIZE; row++) {
                     for (let col = 0; col < CONFIG.GRID_SIZE; col++) {
@@ -634,13 +1410,22 @@
                 }
             }
 
-            // 绘制游戏
-            draw() {
-                // 清空画布
-                this.ctx.fillStyle = CONFIG.COLORS.BG;
-                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            updateProgress() {
+                let connectedCount = 0;
+                for (let row = 0; row < CONFIG.GRID_SIZE; row++) {
+                    for (let col = 0; col < CONFIG.GRID_SIZE; col++) {
+                        if (this.grid[row][col].isConnected) connectedCount++;
+                    }
+                }
+                const totalPipes = CONFIG.GRID_SIZE * CONFIG.GRID_SIZE;
+                const progress = (connectedCount / totalPipes) * 100;
+                document.getElementById('progressFill').style.width = `${progress}%`;
+            }
 
-                // 绘制网格
+            draw() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // 绘制网格背景
                 this.drawGrid();
 
                 // 绘制水管
@@ -652,11 +1437,15 @@
 
                 // 绘制起点和终点标记
                 this.drawMarkers();
+
+                // 绘制提示高亮
+                if (this.hintTarget) {
+                    this.drawHintHighlight();
+                }
             }
 
-            // 绘制网格
             drawGrid() {
-                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
                 this.ctx.lineWidth = 1;
 
                 for (let i = 0; i <= CONFIG.GRID_SIZE; i++) {
@@ -673,277 +1462,378 @@
                 }
             }
 
-            // 绘制水管
             drawPipe(pipe, x, y) {
                 const centerX = x + CONFIG.CELL_SIZE / 2;
                 const centerY = y + CONFIG.CELL_SIZE / 2;
                 const halfSize = CONFIG.CELL_SIZE / 2;
 
                 // 绘制背景
-                this.ctx.fillStyle = pipe.isConnected ? 'rgba(0, 255, 136, 0.1)' : 'rgba(42, 63, 95, 0.5)';
-                this.ctx.fillRect(x, y, CONFIG.CELL_SIZE, CONFIG.CELL_SIZE);
+                this.ctx.fillStyle = pipe.isConnected ? 
+                    'rgba(0, 255, 136, 0.1)' : 'rgba(42, 63, 95, 0.3)';
+                this.ctx.fillRect(x + 2, y + 2, CONFIG.CELL_SIZE - 4, CONFIG.CELL_SIZE - 4);
 
                 if (pipe.type === PIPE_TYPES.EMPTY) return;
 
-                // 设置水管颜色
-                this.ctx.strokeStyle = pipe.isConnected ? CONFIG.COLORS.PIPE_ACTIVE : CONFIG.COLORS.PIPE;
-                this.ctx.lineWidth = CONFIG.PIPE_WIDTH;
-                this.ctx.lineCap = 'round';
-
-                // 保存上下文用于旋转
                 this.ctx.save();
                 this.ctx.translate(centerX, centerY);
                 this.ctx.rotate(pipe.rotation * Math.PI / 2);
 
-                // 根据水管类型绘制
+                // 绘制水管主体 - 延伸到格子边缘以消除间隙
+                const gradient = this.ctx.createLinearGradient(-halfSize, -halfSize, halfSize, halfSize);
+                if (pipe.isConnected) {
+                    gradient.addColorStop(0, '#00ff88');
+                    gradient.addColorStop(0.5, '#00d4ff');
+                    gradient.addColorStop(1, '#00ff88');
+                } else {
+                    gradient.addColorStop(0, '#4a90d9');
+                    gradient.addColorStop(0.5, '#6a5af9');
+                    gradient.addColorStop(1, '#4a90d9');
+                }
+
+                this.ctx.strokeStyle = gradient;
+                this.ctx.lineWidth = CONFIG.PIPE_WIDTH;
+                this.ctx.lineCap = 'butt'; // 使用butt让线段精确到端点
+                this.ctx.shadowBlur = pipe.isConnected ? 20 : 10;
+                this.ctx.shadowColor = pipe.isConnected ? '#00ff88' : '#4a90d9';
+
                 this.ctx.beginPath();
-                switch (pipe.type) {
-                    case PIPE_TYPES.VERTICAL:
-                        this.ctx.moveTo(0, -halfSize + 5);
-                        this.ctx.lineTo(0, halfSize - 5);
+
+                // 根据水管类型绘制 - 延伸到边缘以连接相邻水管
+                const extend = 2; // 延伸量，确保与相邻水管接触
+                switch (pipe.type.id) {
+                    case 1: // 垂直
+                        this.ctx.moveTo(0, -halfSize - extend);
+                        this.ctx.lineTo(0, halfSize + extend);
                         break;
-                    case PIPE_TYPES.HORIZONTAL:
-                        this.ctx.moveTo(-halfSize + 5, 0);
-                        this.ctx.lineTo(halfSize - 5, 0);
+                    case 2: // 水平
+                        this.ctx.moveTo(-halfSize - extend, 0);
+                        this.ctx.lineTo(halfSize + extend, 0);
                         break;
-                    case PIPE_TYPES.UP_RIGHT:
-                        this.ctx.moveTo(0, -halfSize + 5);
+                    case 3: // 上右
+                        this.ctx.moveTo(0, -halfSize - extend);
                         this.ctx.lineTo(0, 0);
-                        this.ctx.lineTo(halfSize - 5, 0);
+                        this.ctx.lineTo(halfSize + extend, 0);
                         break;
-                    case PIPE_TYPES.RIGHT_DOWN:
-                        this.ctx.moveTo(halfSize - 5, 0);
+                    case 4: // 右下
+                        this.ctx.moveTo(halfSize + extend, 0);
                         this.ctx.lineTo(0, 0);
-                        this.ctx.lineTo(0, halfSize - 5);
+                        this.ctx.lineTo(0, halfSize + extend);
                         break;
-                    case PIPE_TYPES.DOWN_LEFT:
-                        this.ctx.moveTo(0, halfSize - 5);
+                    case 5: // 下左
+                        this.ctx.moveTo(0, halfSize + extend);
                         this.ctx.lineTo(0, 0);
-                        this.ctx.lineTo(-halfSize + 5, 0);
+                        this.ctx.lineTo(-halfSize - extend, 0);
                         break;
-                    case PIPE_TYPES.LEFT_UP:
-                        this.ctx.moveTo(-halfSize + 5, 0);
+                    case 6: // 左上
+                        this.ctx.moveTo(-halfSize - extend, 0);
                         this.ctx.lineTo(0, 0);
-                        this.ctx.lineTo(0, -halfSize + 5);
+                        this.ctx.lineTo(0, -halfSize - extend);
                         break;
                 }
+
                 this.ctx.stroke();
 
-                // 绘制连接点
-                this.ctx.fillStyle = pipe.isConnected ? CONFIG.COLORS.PIPE_ACTIVE : CONFIG.COLORS.PIPE;
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, CONFIG.PIPE_WIDTH / 3, 0, Math.PI * 2);
-                this.ctx.fill();
+                // 绘制水流效果
+                if (pipe.isConnected && this.isVictory) {
+                    this.drawWaterFlow(pipe, halfSize, extend);
+                }
 
                 this.ctx.restore();
             }
 
-            // 绘制起点和终点标记
-            drawMarkers() {
-                const markerSize = 20;
+            drawWaterFlow(pipe, halfSize, extend) {
+                const flowOffset = (this.waterFlow * CONFIG.CELL_SIZE) % CONFIG.CELL_SIZE;
+                
+                this.ctx.strokeStyle = 'rgba(0, 212, 255, 0.8)';
+                this.ctx.lineWidth = CONFIG.PIPE_WIDTH * 0.4;
+                this.ctx.shadowBlur = 15;
+                this.ctx.shadowColor = '#00d4ff';
 
-                // 起点
+                this.ctx.beginPath();
+                
+                switch (pipe.type.id) {
+                    case 1: // 垂直
+                        const y1 = -halfSize - extend + flowOffset;
+                        if (y1 < halfSize + extend) {
+                            this.ctx.moveTo(0, y1);
+                            this.ctx.lineTo(0, Math.min(y1 + 20, halfSize + extend));
+                        }
+                        break;
+                    case 2: // 水平
+                        const x1 = -halfSize - extend + flowOffset;
+                        if (x1 < halfSize + extend) {
+                            this.ctx.moveTo(x1, 0);
+                            this.ctx.lineTo(Math.min(x1 + 20, halfSize + extend), 0);
+                        }
+                        break;
+                    case 3: // 上右
+                        if (flowOffset < halfSize + extend) {
+                            this.ctx.moveTo(0, -halfSize - extend + flowOffset);
+                            this.ctx.lineTo(0, Math.min(0, -halfSize + 30 + flowOffset));
+                        } else {
+                            const fx = flowOffset - halfSize - extend;
+                            this.ctx.moveTo(Math.max(0, fx - 20), 0);
+                            this.ctx.lineTo(Math.min(fx, halfSize + extend), 0);
+                        }
+                        break;
+                    case 4: // 右下
+                        if (flowOffset < halfSize + extend) {
+                            this.ctx.moveTo(halfSize + extend - flowOffset, 0);
+                            this.ctx.lineTo(Math.max(0, halfSize - 30 - flowOffset), 0);
+                        } else {
+                            const fy = flowOffset - halfSize - extend;
+                            this.ctx.moveTo(0, Math.max(0, fy - 20));
+                            this.ctx.lineTo(0, Math.min(fy, halfSize + extend));
+                        }
+                        break;
+                    case 5: // 下左
+                        if (flowOffset < halfSize + extend) {
+                            this.ctx.moveTo(0, halfSize + extend - flowOffset);
+                            this.ctx.lineTo(0, Math.max(0, halfSize - 30 - flowOffset));
+                        } else {
+                            const fx2 = flowOffset - halfSize - extend;
+                            this.ctx.moveTo(Math.min(0, -fx2 + 20), 0);
+                            this.ctx.lineTo(Math.max(-fx2, -halfSize - extend), 0);
+                        }
+                        break;
+                    case 6: // 左上
+                        if (flowOffset < halfSize + extend) {
+                            this.ctx.moveTo(-halfSize - extend + flowOffset, 0);
+                            this.ctx.lineTo(Math.min(0, -halfSize + 30 + flowOffset), 0);
+                        } else {
+                            const fy2 = flowOffset - halfSize - extend;
+                            this.ctx.moveTo(0, Math.max(0, -fy2 + 20));
+                            this.ctx.lineTo(0, Math.min(-fy2, -halfSize - extend));
+                        }
+                        break;
+                }
+                
+                this.ctx.stroke();
+            }
+
+            drawMarkers() {
                 const startX = this.startPos.col * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
                 const startY = this.startPos.row * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
-                this.ctx.fillStyle = CONFIG.COLORS.START;
-                this.ctx.beginPath();
-                this.ctx.arc(startX, startY, markerSize / 2, 0, Math.PI * 2);
-                this.ctx.fill();
-                this.ctx.fillStyle = '#fff';
-                this.ctx.font = 'bold 12px Arial';
-                this.ctx.textAlign = 'center';
-                this.ctx.textBaseline = 'middle';
-                this.ctx.fillText('S', startX, startY);
-
-                // 终点
                 const endX = this.endPos.col * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
                 const endY = this.endPos.row * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
-                this.ctx.fillStyle = CONFIG.COLORS.END;
-                this.ctx.beginPath();
-                this.ctx.arc(endX, endY, markerSize / 2, 0, Math.PI * 2);
-                this.ctx.fill();
-                this.ctx.fillStyle = '#333';
-                this.ctx.fillText('E', endX, endY);
-            }
 
-            // 显示提示
-            showHint() {
-                if (this.isVictory) return;
-
-                // 找到当前连通区域
-                const connected = this.checkConnectivity();
-                
-                // 找到连通区域的边界（可以扩展的下一个水管）
-                let hintPipe = null;
-                let hintMessage = "";
-
-                // 遍历所有连通的水管，找到下一个可以连接的水管
-                for (let row = 0; row < CONFIG.GRID_SIZE; row++) {
-                    for (let col = 0; col < CONFIG.GRID_SIZE; col++) {
-                        if (connected[row][col]) {
-                            const pipe = this.grid[row][col];
-                            const connections = pipe.getConnections();
-
-                            for (const dir of connections) {
-                                const offset = DIRECTION_OFFSETS[dir];
-                                const newRow = row + offset.dy;
-                                const newCol = col + offset.dx;
-
-                                if (newRow >= 0 && newRow < CONFIG.GRID_SIZE &&
-                                    newCol >= 0 && newCol < CONFIG.GRID_SIZE &&
-                                    !connected[newRow][newCol]) {
-                                    const neighbor = this.grid[newRow][newCol];
-                                    const oppositeDir = (dir + 2) % 4;
-
-                                    // 检查这个邻居是否是主路径的一部分
-                                    if (neighbor.isPath) {
-                                        // 计算需要旋转多少次才能连通
-                                        const rotationsNeeded = this.calculateRotationsNeeded(neighbor, oppositeDir);
-                                        if (rotationsNeeded !== -1) {
-                                            hintPipe = neighbor;
-                                            hintMessage = `第 ${newRow + 1} 行，第 ${newCol + 1} 列的水管需要旋转 ${rotationsNeeded} 次`;
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                            if (hintPipe) break;
-                        }
-                    }
-                    if (hintPipe) break;
-                }
-
-                // 如果没有找到，检查起点本身是否需要调整
-                if (!hintPipe) {
-                    const startPipe = this.grid[this.startPos.row][this.startPos.col];
-                    if (!this.isPipeCorrectlyRotated(startPipe)) {
-                        hintPipe = startPipe;
-                        hintMessage = `起点水管（第 ${this.startPos.row + 1} 行，第 ${this.startPos.col + 1} 列）需要调整`;
-                    }
-                }
-
-                // 显示提示
-                if (hintPipe) {
-                    this.hintTarget = { row: hintPipe.row, col: hintPipe.col };
-                    document.getElementById('hintText').textContent = hintMessage;
-                    document.getElementById('hintModal').style.display = 'flex';
-                    
-                    // 在画布上高亮提示的水管
-                    this.draw();
-                    this.drawHintHighlight(hintPipe.row, hintPipe.col);
-                } else {
-                    document.getElementById('hintText').textContent = '当前路径已正确，继续加油！';
-                    document.getElementById('hintModal').style.display = 'flex';
-                }
-            }
-
-            // 计算水管需要旋转多少次才能连通指定方向
-            calculateRotationsNeeded(pipe, targetDir) {
-                const originalConnections = pipe.type.connections;
-                
-                for (let r = 0; r < 4; r++) {
-                    const rotatedConnections = originalConnections.map(dir => (dir + r) % 4);
-                    if (rotatedConnections.includes(targetDir)) {
-                        // 检查另一个方向是否也正确（如果是路径中间的水管）
-                        const otherDir = rotatedConnections.find(d => d !== targetDir);
-                        if (otherDir !== undefined) {
-                            const offset = DIRECTION_OFFSETS[otherDir];
-                            const otherRow = pipe.row + offset.dy;
-                            const otherCol = pipe.col + offset.dx;
-                            
-                            if (otherRow >= 0 && otherRow < CONFIG.GRID_SIZE &&
-                                otherCol >= 0 && otherCol < CONFIG.GRID_SIZE) {
-                                const otherPipe = this.grid[otherRow][otherCol];
-                                const oppositeDir = (otherDir + 2) % 4;
-                                if (otherPipe.hasConnection(oppositeDir) || otherPipe.isPath) {
-                                    // 计算从当前旋转到目标旋转需要的次数
-                                    return (r - pipe.rotation + 4) % 4 || 4;
-                                }
-                            }
-                        }
-                        return (r - pipe.rotation + 4) % 4 || 4;
-                    }
-                }
-                return -1;
-            }
-
-            // 检查水管是否已正确旋转
-            isPipeCorrectlyRotated(pipe) {
-                const connections = pipe.getConnections();
-                for (const dir of connections) {
-                    const offset = DIRECTION_OFFSETS[dir];
-                    const newRow = pipe.row + offset.dy;
-                    const newCol = pipe.col + offset.dx;
-                    
-                    if (newRow >= 0 && newRow < CONFIG.GRID_SIZE &&
-                        newCol >= 0 && newCol < CONFIG.GRID_SIZE) {
-                        const neighbor = this.grid[newRow][newCol];
-                        const oppositeDir = (dir + 2) % 4;
-                        if (neighbor.hasConnection(oppositeDir)) {
-                            return true;
-                        }
-                    }
-                }
-                return false;
-            }
-
-            // 绘制提示高亮
-            drawHintHighlight(row, col) {
-                const x = col * CONFIG.CELL_SIZE;
-                const y = row * CONFIG.CELL_SIZE;
-                
-                this.ctx.save();
-                this.ctx.strokeStyle = '#ffd700';
-                this.ctx.lineWidth = 4;
-                this.ctx.shadowColor = '#ffd700';
+                // 起点 S
+                this.ctx.fillStyle = CONFIG.COLORS.START;
                 this.ctx.shadowBlur = 20;
-                this.ctx.strokeRect(x + 2, y + 2, CONFIG.CELL_SIZE - 4, CONFIG.CELL_SIZE - 4);
-                this.ctx.restore();
+                this.ctx.shadowColor = CONFIG.COLORS.START;
+                this.ctx.beginPath();
+                this.ctx.arc(startX, startY, 18, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                this.ctx.fillStyle = '#fff';
+                this.ctx.font = 'bold 20px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.shadowBlur = 0;
+                this.ctx.fillText('S', startX, startY);
+
+                // 终点 E
+                this.ctx.fillStyle = CONFIG.COLORS.END;
+                this.ctx.shadowBlur = 20;
+                this.ctx.shadowColor = CONFIG.COLORS.END;
+                this.ctx.beginPath();
+                this.ctx.arc(endX, endY, 18, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                this.ctx.fillStyle = '#000';
+                this.ctx.font = 'bold 20px Arial';
+                this.ctx.shadowBlur = 0;
+                this.ctx.fillText('E', endX, endY);
+
+                // 终点脉冲效果
+                if (!this.isVictory && !this.isGameOver) {
+                    const pulse = (Math.sin(Date.now() * 0.005) + 1) / 2;
+                    this.ctx.strokeStyle = `rgba(255, 217, 61, ${0.3 + pulse * 0.4})`;
+                    this.ctx.lineWidth = 3;
+                    this.ctx.beginPath();
+                    this.ctx.arc(endX, endY, 25 + pulse * 5, 0, Math.PI * 2);
+                    this.ctx.stroke();
+                }
             }
 
-            // 关闭提示弹窗
+            drawHintHighlight() {
+                if (!this.hintTarget) return;
+                
+                const x = this.hintTarget.col * CONFIG.CELL_SIZE;
+                const y = this.hintTarget.row * CONFIG.CELL_SIZE;
+                const pulse = (Math.sin(Date.now() * 0.008) + 1) / 2;
+                
+                this.ctx.strokeStyle = `rgba(255, 215, 0, ${0.5 + pulse * 0.5})`;
+                this.ctx.lineWidth = 4;
+                this.ctx.shadowBlur = 20;
+                this.ctx.shadowColor = '#ffd700';
+                this.ctx.strokeRect(x + 4, y + 4, CONFIG.CELL_SIZE - 8, CONFIG.CELL_SIZE - 8);
+                this.ctx.shadowBlur = 0;
+            }
+
+            showHint() {
+                // 找到路径上未正确连接的水管
+                for (const pos of this.pathCells) {
+                    const pipe = this.grid[pos.row][pos.col];
+                    if (!pipe.isConnected) {
+                        this.hintTarget = pos;
+                        document.getElementById('hintText').textContent = 
+                            `尝试调整第 ${pos.row + 1} 行，第 ${pos.col + 1} 列的水管`;
+                        document.getElementById('hintModal').style.display = 'flex';
+                        
+                        setTimeout(() => {
+                            this.hintTarget = null;
+                        }, 3000);
+                        return;
+                    }
+                }
+                
+                document.getElementById('hintText').textContent = '所有路径水管都已连接正确！';
+                document.getElementById('hintModal').style.display = 'flex';
+            }
+
             closeHint() {
                 document.getElementById('hintModal').style.display = 'none';
                 this.hintTarget = null;
-                this.draw();
             }
 
-            // 计时器功能
-            startTimer() {
-                this.startTime = Date.now();
-                this.timerInterval = setInterval(() => {
-                    const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
-                    const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
-                    const seconds = (elapsed % 60).toString().padStart(2, '0');
-                    document.getElementById('timeCount').textContent = `${minutes}:${seconds}`;
-                }, 1000);
-            }
-
-            stopTimer() {
-                clearInterval(this.timerInterval);
-            }
-
-            resetTimer() {
-                this.stopTimer();
-                document.getElementById('timeCount').textContent = '00:00';
-            }
-
-            // 更新UI
-            updateUI() {
-                document.getElementById('moveCount').textContent = this.moveCount;
-            }
-
-            // 显示胜利弹窗
             showVictory() {
+                const timeStr = this.formatTime(this.remainingTime);
+                
+                // 计算星级
+                const optimalMoves = this.pathCells.length;
+                const moveBonus = Math.max(0, optimalMoves * 3 - this.moveCount);
+                const timeBonus = this.remainingTime;
+                const levelScore = this.score + moveBonus * 10 + timeBonus * 5 + 1000;
+                
+                let stars = 1;
+                if (this.moveCount <= optimalMoves * 1.5) stars = 2;
+                if (this.moveCount <= optimalMoves * 1.2 && this.remainingTime > 60) stars = 3;
+                
+                // 保存进度
+                if (!this.completedLevels.includes(this.currentLevel)) {
+                    this.completedLevels.push(this.currentLevel);
+                }
+                this.levelStars[this.currentLevel] = Math.max(
+                    this.levelStars[this.currentLevel] || 0, 
+                    stars
+                );
+                localStorage.setItem('pipeGameLevels', JSON.stringify(this.completedLevels));
+                localStorage.setItem('pipeGameStars', JSON.stringify(this.levelStars));
+                
+                // 更新显示
                 document.getElementById('finalMoves').textContent = this.moveCount;
-                document.getElementById('finalTime').textContent = document.getElementById('timeCount').textContent;
+                document.getElementById('finalTime').textContent = timeStr;
+                document.getElementById('victoryScore').textContent = levelScore;
+                
+                const victoryStars = document.getElementById('victoryStars');
+                victoryStars.innerHTML = '';
+                for (let i = 0; i < 3; i++) {
+                    const star = document.createElement('span');
+                    star.className = 'star' + (i < stars ? ' active' : '');
+                    star.textContent = '★';
+                    victoryStars.appendChild(star);
+                }
+                
+                const bonusText = stars === 3 ? '🌟 完美通关！额外奖励 500 分！' : 
+                                  stars === 2 ? '⭐ 优秀！' : '✨ 恭喜通关！';
+                document.getElementById('perfectBonus').textContent = bonusText;
+                
                 document.getElementById('victoryModal').style.display = 'flex';
             }
 
-            // 关闭胜利弹窗
             closeVictory() {
                 document.getElementById('victoryModal').style.display = 'none';
                 this.newGame();
+            }
+
+            nextLevel() {
+                document.getElementById('victoryModal').style.display = 'none';
+                if (this.currentLevel < this.maxLevel) {
+                    this.currentLevel++;
+                    this.newGame();
+                } else {
+                    alert('恭喜！你已通关所有关卡！');
+                    this.currentLevel = 1;
+                    this.newGame();
+                }
+            }
+
+            gameOver() {
+                this.isGameOver = true;
+                this.stopTimer();
+                this.audio.stopBackgroundMusic();
+                
+                document.getElementById('finalMovesGameOver').textContent = this.moveCount;
+                document.getElementById('finalScoreGameOver').textContent = this.score;
+                document.getElementById('gameOverModal').style.display = 'flex';
+            }
+
+            closeGameOver() {
+                document.getElementById('gameOverModal').style.display = 'none';
+                this.newGame();
+            }
+
+            retryLevel() {
+                document.getElementById('gameOverModal').style.display = 'none';
+                this.newGame();
+            }
+
+            toggleMusic() {
+                const enabled = this.audio.toggle();
+                document.getElementById('musicBtn').textContent = enabled ? '🎵' : '🔇';
+            }
+
+            showMenu() {
+                this.renderLevelGrid();
+                document.getElementById('menuModal').style.display = 'flex';
+            }
+
+            closeMenu() {
+                document.getElementById('menuModal').style.display = 'none';
+            }
+
+            renderLevelGrid() {
+                const grid = document.getElementById('levelGrid');
+                grid.innerHTML = '';
+                
+                for (let i = 1; i <= this.maxLevel; i++) {
+                    const btn = document.createElement('div');
+                    btn.className = 'level-btn';
+                    btn.textContent = i;
+                    
+                    // 判断关卡状态
+                    const isCompleted = this.completedLevels.includes(i);
+                    const isCurrent = i === this.currentLevel;
+                    const isLocked = !isCompleted && i > Math.max(...this.completedLevels, 0) + 1;
+                    
+                    if (isLocked) {
+                        btn.classList.add('locked');
+                        btn.innerHTML = '🔒';
+                        btn.title = '请先通关前面的关卡';
+                    } else if (isCurrent) {
+                        btn.classList.add('current');
+                        btn.title = '当前关卡';
+                    } else if (isCompleted) {
+                        btn.classList.add('completed');
+                        const stars = this.levelStars[i] || 0;
+                        btn.innerHTML = `${i}<span class="level-stars">${'★'.repeat(stars)}</span>`;
+                        btn.title = `已通关 - ${stars}星`;
+                    } else {
+                        btn.title = '可玩关卡';
+                    }
+                    
+                    // 点击事件
+                    btn.onclick = () => {
+                        if (!isLocked) {
+                            this.currentLevel = i;
+                            this.closeMenu();
+                            this.newGame();
+                        }
+                    };
+                    
+                    grid.appendChild(btn);
+                }
             }
         }
 
